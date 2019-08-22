@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/data">
+        <file alias="123">C:/Users/rcycy/Pictures/QQ截图20171019221613.png</file>
+        <file>C:/Users/rcycy/Pictures/000.png</file>
+        <file alias="README">../courses/README.md</file>
+        <file>main.cpp</file>
+    </qresource>
+</RCC>
