@@ -35,6 +35,11 @@ void DropItem::setVisible(bool v)
     _visible = v;
 }
 
+bool DropItem::isMark()
+{
+    return id < 0;
+}
+
 bool DropItem::visible()
 {
     return _visible;
@@ -65,9 +70,9 @@ void DropItem::registeItem(DropItem * item)
 
 /*******************Drop Class***************************/
 
-Drop::Drop(int pos):DropItem (getNewID(), pos), mark(DropMark::create(id))
+Drop::Drop(int pos, QColor color):DropItem (getNewID(), pos), mark(DropMark::create(id, color))
 {
-    color = QColor(rand()%256, rand()%256, rand() % 256);
+    this->color = color;
 }
 
 Drop::~Drop()
@@ -77,7 +82,8 @@ Drop::~Drop()
 
 Drop * Drop::create(int pos)
 {
-    auto drop = new Drop(pos);
+    auto color = QColor(rand()%256, rand()%256, rand() % 256);
+    auto drop = new Drop(pos, color);
     registeItem(drop);
     return drop;
 }
@@ -136,14 +142,14 @@ bool LargeDrop::isLargeDrop()
 
 /*******************DropMark Class***************************/
 
-DropMark::DropMark(DropID id): DropItem (id, -1)
+DropMark::DropMark(DropID id, QColor color): DropItem (id, -1)
 {
-
+    this->color = color;
 }
 
-DropMark * DropMark::create(DropID id)
+DropMark * DropMark::create(DropID id, QColor color)
 {
-    auto mark = new DropMark(-id);
+    auto mark = new DropMark(-id, color);
     registeItem(mark);
     return mark;
 }

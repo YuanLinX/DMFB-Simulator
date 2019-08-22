@@ -44,7 +44,11 @@
        </widget>
       </item>
       <item>
-       <widget class="QLCDNumber" name="lcdNumber"/>
+       <widget class="QLCDNumber" name="lcdNumber">
+        <property name="digitCount">
+         <number>4</number>
+        </property>
+       </widget>
       </item>
       <item>
        <spacer name="horizontalSpacer_8">

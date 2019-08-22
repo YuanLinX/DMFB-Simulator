@@ -7,7 +7,8 @@ const QColor DrawWidget::background = QColor(255, 255, 255);
 
 DrawWidget::DrawWidget(QWidget *parent) :
     QWidget(parent),
-    manager(nullptr)
+    manager(nullptr),
+    drawPollution(false)
 {
 
 }
@@ -99,17 +100,25 @@ void DrawWidget::updateSize(QSize size)
     updateImage();
 }
 
+inline double getScale(const QPainter & p, const QRect & r, const QString & str)
+{
+    auto size = p.fontMetrics().size(Qt::TextSingleLine, str);
+    auto scals_x = double(r.width()) / size.width();
+    auto scals_y = double(r.height()) / size.height();
+    return scals_x > scals_y ? scals_y : scals_x;
+}
+
 void DrawWidget::drawInput(QPainter & p, int x, int y)
 {
     p.save();
     p.setBrush(QColor("red"));
+    QString str("Input");
+
     QRect r(x * len_x, y * len_y, len_x, len_y);
     p.drawRect(r);
 
     auto font = p.font();
-    auto a = p.fontMetrics().size(Qt::TextSingleLine, "Input").width();
-    qreal b = qreal(r.width()) / a * 0.9;
-    font.setPointSizeF(b * font.pointSizeF());
+    font.setPointSizeF(getScale(p, r, str) * 0.8 * font.pointSizeF());
     font.setFamily("Consolas");
     p.setFont(font);
     p.drawText(r, Qt::AlignCenter, "Input");
@@ -120,17 +129,30 @@ void DrawWidget::drawOutput(QPainter & p, int x, int y)
 {
     p.save();
     p.setBrush(QColor("blue"));
-    QString str = "Output";
+    QString str("Output");
+
     QRect r(x * len_x, y * len_y, len_x, len_y);
     p.drawRect(r);
 
     auto font = p.font();
-    auto a = p.fontMetrics().size(Qt::TextSingleLine, "Output").width();
-    qreal b = qreal(r.width()) / a * 0.9;
-    font.setPointSizeF(b * font.pointSizeF());
+    font.setPointSizeF(getScale(p, r, str) * 0.8 * font.pointSizeF());
     font.setFamily("Consolas");
     p.setFont(font);
     p.drawText(r, Qt::AlignCenter, "Output");
+    p.restore();
+}
+
+void DrawWidget::drawNumber(QPainter & p, int x, int y, int num)
+{
+    p.save();
+    QString str = QString("%1").arg(num);
+    QRect r(x * len_x, y * len_y, len_x, len_y);
+
+    auto font = p.font();
+    font.setPointSizeF(getScale(p, r, str) * 0.8 * font.pointSizeF());
+    font.setFamily("Consolas");
+    p.setFont(font);
+    p.drawText(r, Qt::AlignCenter, str);
     p.restore();
 }
 
@@ -166,47 +188,68 @@ void DrawWidget::updateImage()
         return;
     image = backimage.copy();
     QPainter p(&image);
-    p.setPen(Qt::NoPen);
     p.setRenderHint(QPainter::Antialiasing, true);
     p.translate(edge_x + len_x, edge_y + len_y);
     auto col = manager->col;
     auto row = manager->row;
 
-
-    for(int pos = 0; pos < col * row; pos++)
+    if(drawPollution)
     {
-        auto drop = manager->getDrop(pos);
-        QRect r(pos % col * len_x, pos / col * len_y, len_x, len_y);
-        if(drop)
+        p.setPen(QColor("black"));
+        for(int pos = 0; pos < col * row; pos++)
         {
-            p.setBrush(drop->color);
-            if(drop->isLargeDrop())
+            drawNumber(p, pos % col, pos / col, manager->pollute[pos].size());
+        }
+    }
+    else
+    {
+        // else draw drops
+        p.setPen(Qt::NoPen);
+        for(int pos = 0; pos < col * row; pos++)
+        {
+            auto drop = manager->getDrop(pos);
+            QRect r(pos % col * len_x, pos / col * len_y, len_x, len_y);
+            if(drop)
             {
-                auto large = static_cast<LargeDrop*>(drop);
-                auto pos1 = large->pos1;
-                auto pos2 = large->pos2;
-                // judge it's horizontal or vertical
-                if(pos2 - pos1 == 2)
+                p.setBrush(drop->color);
+                if(drop->isLargeDrop())
                 {
-                    // horizontal
-                    r = QRect(pos1 % col * len_x, pos1 / col * len_y, len_x * 3, len_y);
+                    auto large = static_cast<LargeDrop*>(drop);
+                    auto pos1 = large->pos1;
+                    auto pos2 = large->pos2;
+                    // judge it's horizontal or vertical
+                    if(pos2 - pos1 == 2)
+                    {
+                        // horizontal
+                        r = QRect(pos1 % col * len_x, pos1 / col * len_y, len_x * 3, len_y);
+                        p.drawEllipse(r);
+                    }
+                    else
+                    {
+                        // vertical
+                        r = QRect(pos1 % col * len_x, pos1 / col * len_y, len_x, len_y * 3);
+                        p.drawEllipse(r);
+                    }
+                }
+                else if(drop->isMark())
+                {
+                    p.save();
+                    p.setBrush(Qt::NoBrush);
+                    p.setPen(QPen(drop->color, 3));
+                    r = QRect(pos % col * len_x + len_x / 4,pos / col * len_y + len_y / 4, len_x / 2, len_y / 2);
                     p.drawEllipse(r);
+                    p.restore();
                 }
                 else
                 {
-                    // vertical
-                    r = QRect(pos1 % col * len_x, pos1 / col * len_y, len_x, len_y * 3);
-                    p.drawEllipse(r);
-                }
-            }
-            else
-            {
-                if(drop->visible())
-                    p.drawEllipse(r);
+                    if(drop->visible())
+                        p.drawEllipse(r);
 
+                }
             }
         }
     }
+
     update();
     return;
 }

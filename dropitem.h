@@ -16,6 +16,7 @@ public:
     void move(int pos);
     void setVisible(bool);
     bool visible();
+    bool isMark();
     virtual bool isLargeDrop()=0;
     virtual ~DropItem();
 
@@ -46,7 +47,7 @@ public:
 private:
 
     // forbid to call construct and desconstruct function from outside
-    Drop(int pos);
+    Drop(int pos, QColor color);
     virtual ~Drop();
     DropMark * mark;
 
@@ -76,14 +77,14 @@ class DropMark: public DropItem
 {
 public:
 
-    static DropMark * create(DropID id);
+    static DropMark * create(DropID id, QColor color);
     virtual bool isLargeDrop();
 
 private:
 
     // forbid to call construct and desconstruct function from outside
     virtual ~DropMark();
-    DropMark(DropID id);
+    DropMark(DropID id, QColor color);
 };
 
 class CleanerDrop: public DropItem

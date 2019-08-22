@@ -14,7 +14,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow),
     manager(new DMFB),
     reverse(false),
-    isPlaying(false)
+    isPlaying(false),
+    showPollution(false)
 {
     ui->setupUi(this);
     // set data for drawer
@@ -109,14 +110,28 @@ void MainWindow::on_pushButton_play_clicked()
 
 void MainWindow::on_pushButton_last_clicked()
 {
-    reverse = true;
-    updateDMFB();
+    if(showPollution)
+    {
+        hidePollution();
+    }
+    else
+    {
+        reverse = true;
+        updateDMFB();
+    }
 }
 
 void MainWindow::on_pushButton_next_clicked()
 {
-    reverse = false;
-    updateDMFB();
+    if(manager->normalOver())
+    {
+        setShowPollution();
+    }
+    else
+    {
+        reverse = false;
+        updateDMFB();
+    }
 }
 
 void MainWindow::setInterval(int value)
@@ -175,9 +190,19 @@ void MainWindow::updatePushbutton()
 {
     auto over = manager->over();
     ui->pushButton_play->setEnabled(!over);
-    ui->pushButton_next->setEnabled(!over);
     ui->pushButton_last->setEnabled(manager->getT());
     ui->pushButton_reset->setEnabled(manager->getT());
+
+    if(manager->normalOver())
+    {
+        ui->pushButton_next->setText("result");
+        ui->pushButton_next->setEnabled(!showPollution);
+    }
+    else
+    {
+        ui->pushButton_next->setText("next");
+        ui->pushButton_next->setEnabled(!over);
+    }
 }
 
 void MainWindow::loadFile()
@@ -185,19 +210,14 @@ void MainWindow::loadFile()
     auto name = QFileDialog::getOpenFileName(this);
     if(!name.length())
         return;
-    filename = name;
-    reset();
-}
-
-void MainWindow::reset()
-{
     manager->initalize();
-    if(filename.length())
+    if(name.length())
     {
-        QFile f(filename);
+        QFile f(name);
         if(!f.open(QIODevice::ReadOnly))
         {
             QMessageBox::critical(this, "open file failed", QString("can't open the file ") + filename);
+            return;
         }
         QTextStream s(&f);
         QString str;
@@ -207,12 +227,19 @@ void MainWindow::reset()
             manager->addInstruction(str);
         }while(str.length());
     }
+    filename = name;
+    reset();
+}
+
+void MainWindow::reset()
+{
+    manager->reset();
     if(manager->getLastT() > -1)
     {
         ui->pushButton_next->setEnabled(true);
         ui->pushButton_play->setEnabled(true);
     }
-
+    hidePollution();
     ui->lcdNumber->display(0);
     ui->widget->updateImage();
     updatePushbutton();
@@ -227,7 +254,6 @@ void MainWindow::updatePlay()
         timer.stop();
         on_pushButton_play_clicked();
     }
-
 }
 
 void MainWindow::updateDMFB()
@@ -240,29 +266,29 @@ void MainWindow::updateDMFB()
     {
         if(!manager->next())
         {
-            qDebug()<<manager->errorInfo;
-            manager->errorInfo.clear();
-        }
-        else
-        {
-            auto flag = manager->getFlag();
-            if(flag.input)
-                inputSound();
-            if(flag.output)
-                outputSound();
-            if(flag.move)
-                moveSound();
-            if(flag.merge1)
-                mergeSound1();
-            if(flag.merge2)
-                mergeSound2();
-            if(flag.split1)
-                splitSound1();
-            if(flag.split2)
-                splitSound2();
-
+            auto errors = manager->errorInfo;
+            qDebug()<<errors;
+            for(int i = 0; i < errors.length(); i++)
+            {
+                QMessageBox::critical(this, QString("error %1").arg(i + 1), errors[i]);
+            }
         }
     }
+    auto flag = manager->getFlag();
+    if(flag.input)
+        inputSound();
+    if(flag.output)
+        outputSound();
+    if(flag.move)
+        moveSound();
+    if(flag.merge1)
+        mergeSound1();
+    if(flag.merge2)
+        mergeSound2();
+    if(flag.split1)
+        splitSound1();
+    if(flag.split2)
+        splitSound2();
     if(!isPlaying)
     {
         updatePushbutton();
@@ -272,3 +298,20 @@ void MainWindow::updateDMFB()
     ui->widget->updateImage();
 }
 
+void MainWindow::setShowPollution()
+{
+    showPollution = true;
+    ui->widget->drawPollution = true;
+    ui->pushButton_next->setEnabled(false);
+    ui->lcdNumber->display("END");
+    ui->widget->updateImage();
+}
+
+void MainWindow::hidePollution()
+{
+    showPollution = false;
+    ui->widget->drawPollution = false;
+    ui->pushButton_next->setEnabled(true);
+    ui->lcdNumber->display(manager->getT());
+    ui->widget->updateImage();
+}

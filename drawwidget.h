@@ -28,6 +28,7 @@ public:
     void updateSize(QSize=QSize());
     void updateImage();
     void resizeEvent(QResizeEvent *);
+    bool drawPollution;
 
 private:
     int edge_x;
@@ -36,6 +37,7 @@ private:
     int len_y;
     void drawInput(QPainter &, int x, int y);
     void drawOutput(QPainter &, int x, int y);
+    void drawNumber(QPainter &, int x, int y, int num);
     auto getDrawPos(int x, int y, int row, int col);
     QPixmap backimage;
     QPixmap image;

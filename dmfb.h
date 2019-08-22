@@ -2,6 +2,7 @@
 #define DMFB_H
 #include <QList>
 #include <QVector>
+#include <QSet>
 #include "instruction.h"
 #include "dropitem.h"
 
@@ -27,8 +28,9 @@ public:
     bool next();
     bool last();
     void initalize();
-    void clear();
+    void reset();
     QList <QString> errorInfo;
+    QVector <QSet<DropItem *>> pollute;
 
     int getT() const;
     DropItem * getDrop(int pos);
@@ -37,12 +39,18 @@ public:
     int output;
     int getLastT() const;
     bool over() const;
+    bool normalOver() const;
     const actionFlag & getFlag();
 
 
 private:
-    class Save
+    enum Mask
     {
+        NONE,
+        // zone of control
+        ZOC,
+        DROP,
+        DROPMARK
 
     };
 
@@ -52,20 +60,24 @@ private:
     QVector <QList <LargeDrop *>> SplitSave;
     QVector <QVector <DropItem *>> allDrops;
 
-
     QVector <DropItem *> drops;
 
-    QVector <int> pollute;
-    QVector <Save> save;
     QMap <QString, InstructionType> nameToType;
     int t;
     int lastInstructionT;
 
-    void loadState(int target);
+    bool loadState(int target);
     bool executeInstruction(Instruction *);
     void clearInstrcutions();
     void clearDrops();
+    void clear();
+
     actionFlag flag;
+    static const int max_t = 200;
+    static const int max_size = 200;
+    bool check();
+    Mask mask[max_size];
+    Mask last_mask[max_size];
 
 };
 

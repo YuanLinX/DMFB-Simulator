@@ -43,11 +43,14 @@ private:
 
     bool reverse;
     bool isPlaying;
+    bool showPollution;
     QString filename;
 
     void updateDMFB();
     QTimer timer;
     void updatePushbutton();
+    void setShowPollution();
+    void hidePollution();
 };
 
 #endif // MAINWINDOW_H

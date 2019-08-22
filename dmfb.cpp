@@ -23,10 +23,12 @@ void DMFB::initalize()
     t = 0;
     lastInstructionT = -1;
     clear();
-
+    clearInstrcutions();
+    pollute.resize(col * row);
     drops.resize(col * row);
-    instructions.resize(200);
-
+    instructions.resize(max_t);
+    memset(mask, 0, sizeof(mask));
+    memset(last_mask, 0, sizeof(last_mask));
 }
 
 void DMFB::clear()
@@ -34,10 +36,8 @@ void DMFB::clear()
     errorInfo.clear();
     MergeSave.clear();
     SplitSave.clear();
-    save.clear();
     pollute.clear();
     drops.clear();
-    clearInstrcutions();
     clearDrops();
 }
 
@@ -130,9 +130,11 @@ bool DMFB::next()
 {
     flag = {};
     if(t >= instructions.length())
-        return false;
-    if(t)
-        drops = allDrops.last();
+        assert(0);
+    if(t < allDrops.length())
+    {
+        return loadState(t + 1);
+    }
     if(SplitSave[t].length())
     {
         flag.split2 = true;
@@ -141,9 +143,8 @@ bool DMFB::next()
             auto pos = large->getPos();
             large->drop1->setVisible(true);
             large->drop2->setVisible(true);
-            drops[t][pos] = nullptr;
+            drops[pos] = large->drop->getMark();;
         }
-        SplitSave.clear();
     }
     if(MergeSave[t].length())
     {
@@ -153,46 +154,104 @@ bool DMFB::next()
             auto pos = large->getPos();
             auto pos1 = large->pos1;
             auto pos2 = large->pos2;
-            drops[t][pos] = large->drop;
-            drops[t][pos1] = nullptr;
-            drops[t][pos2] = nullptr;
+            drops[pos] = large->drop;
+            drops[pos1] = static_cast<Drop *>(drops[pos1])->getMark();
+            drops[pos2] = static_cast<Drop *>(drops[pos2])->getMark();
             large->drop->setVisible(true);
         }
-        MergeSave.clear();
     }
 
     for(auto ins: instructions[t])
     {
-        executeInstruction(ins);
+        // error occurs
+        if(!executeInstruction(ins))
+        {
+            // set this t as final
+            lastInstructionT = t;
+            break;
+        }
     }
 
-    if(errorInfo.length())
-    {
-        return false;
-    }
     allDrops.append(drops);
     t++;
+    check();
+    if(errorInfo.length())
+    {
+        lastInstructionT = t - 1;
+        return false;
+    }
     return true;
 }
 
 bool DMFB::last()
 {
-    if(t)
+    if(!t)
     {
         qDebug()<<"error!";
         return false;
     }
-    t--;
-    loadState(t);
+    loadState(t - 1);
     return true;
 }
 
-void DMFB::loadState(int target)
+bool DMFB::loadState(int target)
 {
-    // load save
-    save[target];
-    save.pop_back();
-    return;
+    assert("target beyond range" && target <= allDrops.length());
+    t = target;
+    if(target==0)
+    {
+        reset();
+        return true;
+    }
+    drops = allDrops[target - 1];
+    // initialize all drops visible
+    for(auto drop:drops)
+    {
+        if(drop)
+            drop->setVisible(true);
+    }
+    // then set invisible
+    for(auto drop:drops)
+    {
+        if(drop && drop->isLargeDrop())
+        {
+            auto large = static_cast<LargeDrop *>(drop);
+            large->drop1->setVisible(false);
+            large->drop2->setVisible(false);
+        }
+    }
+    // get sound flag
+    for(auto & ins: instructions[target - 1])
+    {
+        switch (ins->type)
+        {
+        case INPUT:
+            flag.input = true;
+            break;
+        case OUTPUT:
+            flag.output = true;
+            break;
+        case MERGE:
+            flag.merge1 = true;
+            break;
+        case SPLIT:
+            flag.split1 = true;
+            break;
+        case MOVE:
+            flag.move = true;
+            break;
+        case MIX:
+            assert(0);
+            break;
+        }
+    }
+    flag.split2 = bool(SplitSave[target - 1].length());
+    flag.merge2 = bool(MergeSave[target - 1].length());
+
+    if(t > lastInstructionT && errorInfo.length())
+        return false;
+
+    return true;
 }
 
 int DMFB::getT() const
@@ -203,7 +262,7 @@ int DMFB::getT() const
 DropItem * DMFB::getDrop(int pos)
 {
     assert(pos >= 0 && pos < col * row);
-    return drops[t][pos];
+    return drops[pos];
 }
 
 int DMFB::getLastT() const
@@ -219,6 +278,15 @@ const DMFB::actionFlag & DMFB::getFlag()
 bool DMFB::over() const
 {
     return t > lastInstructionT;
+}
+
+void DMFB::reset()
+{
+    t = 0;
+    drops.clear();
+    drops.resize(col * row);
+    MergeSave.resize(lastInstructionT + 1);
+    SplitSave.resize(lastInstructionT + 1);
 }
 
 bool DMFB::executeInstruction(Instruction * ins)
@@ -242,7 +310,7 @@ bool DMFB::executeInstruction(Instruction * ins)
             return false;
         }
         auto drop = Drop::create(pos);
-        drops[t][pos] = drop;
+        drops[pos] = drop;
         flag.input = true;
     }
     break;
@@ -257,7 +325,7 @@ bool DMFB::executeInstruction(Instruction * ins)
             errorInfo.append(QString("wrong output postion (%1, %2)").arg(x + 1).arg(y + 1));
             return false;
         }
-        drops[t][pos] = nullptr;
+        drops[pos] = static_cast<Drop *>(drops[pos])->getMark();
         flag.output = true;
         break;
     }
@@ -272,12 +340,12 @@ bool DMFB::executeInstruction(Instruction * ins)
         {
             auto pos1 = y1 * col + x1;
             auto pos2 = y2 * col + x2;
-            if(!drops[t - 1][pos1])
+            if(!drops[pos1])
             {
                 errorInfo.append(QString("no drop at (%1,%2)").arg(x1).arg(y1));
                 return false;
             }
-            if(!drops[t - 1][pos2])
+            if(!drops[pos2])
             {
                 errorInfo.append(QString("no drop at (%1,%2)").arg(x2).arg(y2));
                 return false;
@@ -287,12 +355,12 @@ bool DMFB::executeInstruction(Instruction * ins)
             auto pos = y * col + x;
             auto merged = Drop::create(pos);
             auto large = LargeDrop::create(pos
-                                           , merged, drops[t][pos1], drops[t][pos2], true);
+                                           , merged, drops[pos1], drops[pos2], true);
             merged->setVisible(false);
-            drops[t][pos1]->setVisible(false);
-            drops[t][pos2]->setVisible(false);
-            drops[t][pos] = large;
-            MergeSave[t].append(large);
+            drops[pos1]->setVisible(false);
+            drops[pos2]->setVisible(false);
+            drops[pos] = large;
+            MergeSave[t + 1].append(large);
             flag.merge1 = true;
         }
         else
@@ -319,22 +387,24 @@ bool DMFB::executeInstruction(Instruction * ins)
             auto pos = y1 * col + x1;
             auto pos1 = y2 * col + x2;
             auto pos2 = y3 * col + x3;
-            if(!drops[y1][x1])
+            auto drop = drops[pos];
+
+            if(!drop)
             {
                 errorInfo.append(QString("no drop at (%1,%2)").arg(x1).arg(y1));
                 return false;
             }
-            auto drop = drops[y1][x1];
+
             auto drop1 = Drop::create(pos1);
             auto drop2 = Drop::create(pos2);
             auto large = LargeDrop::create(pos, drop, drop1, drop2, false);
             drop->setVisible(false);
             drop1->setVisible(false);
             drop2->setVisible(false);
-            drops[y1][x1] = large;
-            drops[y2][x2] = drop1;
-            drops[y3][x3] = drop2;
-            SplitSave.append(large);
+            drops[pos] = large;
+            drops[pos1] = drop1;
+            drops[pos2] = drop2;
+            SplitSave[t + 1].append(large);
             flag.split1 = true;
         }
         else
@@ -358,9 +428,11 @@ bool DMFB::executeInstruction(Instruction * ins)
                                                                                 x1 + 1).arg(y1 + 1).arg(x2 + 1).arg(y2 + 1));
             return false;
         }
-        drops[y2][x2] = drops[y1][x1];
-        drops[y2][x2]->move(y2 * col + x2);
-        drops[y1][x1] = nullptr;
+        auto pos1 = y1 * col + x1;
+        auto pos2 = y2 * col + x2;
+        drops[pos2] = drops[pos1];
+        drops[pos2]->move(y2 * col + x2);
+        drops[pos1] = static_cast<Drop *>(drops[pos1])->getMark();;
         flag.move = true;
         break;
     }
@@ -371,4 +443,60 @@ bool DMFB::executeInstruction(Instruction * ins)
     }
     }
     return true;
+}
+
+bool DMFB::check()
+{
+    // generate static bound
+    for (int pos = 0; pos < row * col; pos++)
+    {
+        auto drop = drops[pos];
+        if(!drop || drop->isLargeDrop() || drop->isMark())
+            continue;
+        if(mask[pos])
+        {
+            errorInfo.append(QString("(%1,%2) disobey static bound!").arg(
+                                                                         pos % col + 1).arg(pos / col + 1));
+            return false;
+        }
+        if(last_mask[pos] && allDrops[t - 1][pos] != drop)
+        {
+            // check dynamic bound
+            errorInfo.append(QString("(%1,%2) disobey dynamic bound!").arg(
+                                                                          pos % col + 1).arg(pos / col + 1));
+            return false;
+        }
+        mask[pos] = DROP;
+        pollute[pos].insert(drop);
+        auto x = pos % col;
+        auto y = pos / col;
+        for(int dy = y - 1; dy <= y + 1; dy++)
+            for(int dx = x - 1; dx <= x + 1; dx++)
+            {
+                // itself
+                if(dx == x && dy == y)
+                    continue;
+                // beyond range
+                if(dx < 0 || dy < 0 || dx == col || dy == row)
+                    continue;
+                if(mask[dy * col + dx] == DROP)
+                {
+                    qDebug()<<dy<<dx<<dy*col+dx<<mask[dy * col + dx];
+                    errorInfo.append(QString("(%1,%2) disobey static bound!").arg(dx).arg(dy));
+                    return false;
+                }
+                mask[dy * col + dx] = ZOC;
+            }
+    }
+
+    memcpy(last_mask, mask, sizeof(mask));
+    memset(mask, 0, sizeof(mask));
+
+
+    return true;
+}
+
+bool DMFB::normalOver() const
+{
+    return t > lastInstructionT && errorInfo.empty() && lastInstructionT > -1;
 }
