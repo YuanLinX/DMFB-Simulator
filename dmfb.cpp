@@ -1,8 +1,10 @@
 #include "dmfb.h"
 #include <QDebug>
 #include "functions.h"
+#include <QQueue>
 
-DMFB::DMFB(): row(3), col(3), inputs({3}), output(5), cleaner(false), washing(false), washer(nullptr)
+DMFB::DMFB(): row(3), col(3), inputs({3}), output(5), cleaner(false),
+    washing(false), washer(nullptr), wastePos(-1)
 {
     nameToType["input"] = INPUT;
     nameToType["output"] = OUTPUT;
@@ -18,12 +20,16 @@ DMFB::~DMFB()
     clearInstrcutions();
 }
 
-void DMFB::initalize()
+void DMFB::initalize(bool reload)
 {
     t = 0;
-    lastInstructionT = -1;
     clear();
-    clearInstrcutions();
+    if(reload)
+    {
+        clearInstrcutions();
+        lastInstructionT = -1;
+    }
+    lastT = lastInstructionT;
     pollute.resize(col * row);
     drops.resize(col * row);
     instructions.resize(max_t);
@@ -33,6 +39,10 @@ void DMFB::initalize()
     {
         obstacle.resize(col * row);
         obstacle.fill(false);
+        wash_map.resize(col * row);
+        wastePos = row * col - 1;
+        distance.resize(col * row);
+        comeFrom.resize(col * row);
     }
 }
 
@@ -145,6 +155,7 @@ void DMFB::addInstruction(QString s)
         instructions.resize(_t * 2);
     instructions[_t].append(p);
     lastInstructionT = max(_t, lastInstructionT);
+    lastT = lastInstructionT;
 }
 
 bool DMFB::next()
@@ -188,7 +199,7 @@ bool DMFB::next()
         if(!executeInstruction(ins))
         {
             // set this t as final
-            lastInstructionT = t;
+            lastT = t;
             break;
         }
     }
@@ -198,7 +209,7 @@ bool DMFB::next()
     check();
     if(errorInfo.length())
     {
-        lastInstructionT = t - 1;
+        lastT = t - 1;
         return false;
     }
     return true;
@@ -289,7 +300,7 @@ DropItem * DMFB::getDrop(int pos)
 
 int DMFB::getLastT() const
 {
-    return lastInstructionT;
+    return lastT;
 }
 
 const DMFB::actionFlag & DMFB::getFlag()
@@ -299,7 +310,7 @@ const DMFB::actionFlag & DMFB::getFlag()
 
 bool DMFB::over() const
 {
-    return t > lastInstructionT;
+    return t > lastT;
 }
 
 void DMFB::reset()
@@ -332,6 +343,11 @@ bool DMFB::executeInstruction(Instruction * ins)
             return false;
         }
         auto drop = Drop::create(pos);
+        if(cleaner && drops[pos] && drops[pos]->isMark())
+        {
+            errorInfo.append(QString("input at (%1, %2) get polluted!").arg(x + 1).arg(y + 1));
+            return false;
+        }
         drops[pos] = drop;
         flag.input = true;
     }
@@ -381,6 +397,13 @@ bool DMFB::executeInstruction(Instruction * ins)
             merged->setVisible(false);
             drops[pos1]->setVisible(false);
             drops[pos2]->setVisible(false);
+
+            if(cleaner && drops[pos] && drops[pos]->isMark())
+            {
+                errorInfo.append(QString("Merge at (%1, %2) get polluted!").arg(x + 1).arg(y + 1));
+                return false;
+            }
+
             drops[pos] = large;
             MergeSave[t + 1].append(large);
             flag.merge1 = true;
@@ -423,6 +446,19 @@ bool DMFB::executeInstruction(Instruction * ins)
             drop->setVisible(false);
             drop1->setVisible(false);
             drop2->setVisible(false);
+
+            if(cleaner && drops[pos1] && drops[pos1]->isMark())
+            {
+                errorInfo.append(QString("split at (%1, %2) get polluted!").arg(x2 + 1).arg(y2 + 1));
+                return false;
+            }
+
+            if(cleaner && drops[pos2] && drops[pos2]->isMark())
+            {
+                errorInfo.append(QString("split at (%1, %2) get polluted!").arg(x3 + 1).arg(y3 + 1));
+                return false;
+            }
+
             drops[pos] = large;
             drops[pos1] = drop1;
             drops[pos2] = drop2;
@@ -452,6 +488,12 @@ bool DMFB::executeInstruction(Instruction * ins)
         }
         auto pos1 = y1 * col + x1;
         auto pos2 = y2 * col + x2;
+
+        if(cleaner && drops[pos2] && drops[pos2]->isMark() && drops[pos2]!= static_cast<Drop *>(drops[pos1])->getMark())
+        {
+            errorInfo.append(QString("drop move to (%1, %2) get polluted!").arg(x2 + 1).arg(y2 + 1));
+            return false;
+        }
         drops[pos2] = drops[pos1];
         drops[pos2]->move(y2 * col + x2);
         drops[pos1] = static_cast<Drop *>(drops[pos1])->getMark();;
@@ -523,7 +565,197 @@ bool DMFB::normalOver() const
     return t > lastInstructionT && errorInfo.empty() && lastInstructionT > -1;
 }
 
-bool wash()
+bool DMFB::wash()
 {
+    // return true if it needs keep washing
+
+    if(!washer)
+    {
+        if(putWasher())
+        {
+            washing = true;
+            return true;
+        }
+        return false;
+    }
+
+    if(path.empty())
+    {
+        if(targetList.empty())
+        {
+            if(washer->getPos() == wastePos)
+            {
+                outWasher();
+                washing = false;
+                return false;
+            }
+            else
+            {
+                updateDistance();
+                getPath(wastePos);
+            }
+        }
+        else
+        {
+            auto target = getNextTarget();
+            getPath(target);
+        }
+    }
+
+    // now we should have a path
+    washerMove(path.back());
+    path.pop_back();
     return true;
 }
+
+int DMFB::getNextTarget()
+{
+    updateDistance();
+    int target = -1;
+    int nearest = row * col;
+    for(auto pos: targetList)
+    {
+        if(distance[pos] < nearest)
+        {
+            nearest = distance[pos];
+            target = pos;
+        }
+    }
+    return target;
+}
+
+void DMFB::getPath(int pos)
+{
+    path.clear();
+    auto current = pos;
+    for(int i=0;i<distance[pos];i++)
+    {
+        path.append(current);
+        current = comeFrom[current];
+    }
+    assert(current == washer->getPos());
+}
+
+void DMFB::washerMove(int pos)
+{
+    if(wash_map[pos] == TARGET)
+    {
+        targetList.removeOne(pos);
+        pollute[pos].remove(static_cast<DropMark *>(drops[pos])->getDrop());
+        wash_map[pos] = PATH;
+    }
+    drops[washer->getPos()] = nullptr;
+    drops[pos] = washer;
+    washer->move(pos);
+}
+
+void DMFB::updateDistance()
+{
+    distance.fill(-1);
+    comeFrom.fill(-1);
+    QQueue<int> save;
+    QQueue<int> from;
+    save.enqueue(washer->getPos());
+    from.enqueue(row * col);
+    while(save.length())
+    {
+        auto pos = save.dequeue();
+        auto past = from.dequeue();
+        if(!reachable(pos) || comeFrom[pos] != -1)
+            // can't visit or has been visited
+            continue;
+        comeFrom[pos] = past;
+        distance[pos] = past != row * col? distance[past] + 1 : 0;
+        if(pos % col)
+        {
+            save.enqueue(pos - 1);
+            from.enqueue(pos);
+        }
+        if(pos / col)
+        {
+            save.enqueue(pos - col);
+            from.enqueue(pos);
+        }
+        if((pos + 1) % col)
+        {
+            save.enqueue(pos + 1);
+            from.enqueue(pos);
+        }
+        if(pos + col < row * col)
+        {
+            save.enqueue(pos + col);
+            from.enqueue(pos);
+        }
+    }
+}
+
+bool DMFB::reachable(int pos)
+{
+    return wash_map[pos] == PATH || wash_map[pos] == TARGET;
+}
+
+bool DMFB::putWasher()
+{
+    wash_map.fill(UNVISITED);
+    targetList.clear();
+    searchPath(washPos);
+    if(!reachable(wastePos))
+        // can't find a way from input to output
+        return false;
+    if(targetList.empty())
+        // nothing to wash
+        return false;
+    washer = CleanerDrop::create(washPos);
+    washerMove(washPos);
+    return true;
+}
+
+void DMFB::outWasher()
+{
+    drops[wastePos] = nullptr;
+    washer = nullptr;
+    allDrops[t - 1] = drops;
+}
+
+void DMFB::searchPath(int pos)
+{
+    // if this one has been visitied
+    if(wash_map[pos])
+        return;
+
+    if(obstacle[pos] || last_mask[pos])
+    {
+        wash_map[pos] = OBSTACLE;
+        return;
+    }
+
+    if(drops[pos] && drops[pos]->isMark())
+    {
+        wash_map[pos] = TARGET;
+        targetList.append(pos);
+    }
+    else
+        wash_map[pos] = PATH;
+
+    if(pos % col)
+        searchPath(pos - 1);
+    if(pos / col)
+        searchPath(pos - col);
+    if((pos + 1) % col)
+        searchPath(pos + 1);
+    if(pos + col < col * row)
+        searchPath(pos + col);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+

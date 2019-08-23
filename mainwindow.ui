@@ -10,6 +10,9 @@
     <height>552</height>
    </rect>
   </property>
+  <property name="focusPolicy">
+   <enum>Qt::StrongFocus</enum>
+  </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
@@ -124,6 +127,9 @@
       </item>
       <item>
        <widget class="QPushButton" name="pushButton_last">
+        <property name="focusPolicy">
+         <enum>Qt::NoFocus</enum>
+        </property>
         <property name="text">
          <string>last</string>
         </property>
@@ -144,6 +150,9 @@
       </item>
       <item>
        <widget class="QPushButton" name="pushButton_play">
+        <property name="focusPolicy">
+         <enum>Qt::NoFocus</enum>
+        </property>
         <property name="text">
          <string>play</string>
         </property>
@@ -164,6 +173,9 @@
       </item>
       <item>
        <widget class="QPushButton" name="pushButton_next">
+        <property name="focusPolicy">
+         <enum>Qt::NoFocus</enum>
+        </property>
         <property name="text">
          <string>next</string>
         </property>
@@ -184,6 +196,9 @@
       </item>
       <item>
        <widget class="QPushButton" name="pushButton_reset">
+        <property name="focusPolicy">
+         <enum>Qt::NoFocus</enum>
+        </property>
         <property name="text">
          <string>reset</string>
         </property>
@@ -228,6 +243,9 @@
       </item>
       <item>
        <widget class="QSlider" name="horizontalSlider">
+        <property name="focusPolicy">
+         <enum>Qt::NoFocus</enum>
+        </property>
         <property name="value">
          <number>0</number>
         </property>

@@ -15,7 +15,8 @@ MainWindow::MainWindow(QWidget *parent) :
     manager(new DMFB),
     reverse(false),
     isPlaying(false),
-    showPollution(false)
+    showPollution(false),
+    washing(false)
 {
     ui->setupUi(this);
     // set data for drawer
@@ -29,6 +30,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->pushButton_reset->setEnabled(false);
 
     connect(&timer, SIGNAL(timeout()), this, SLOT(updatePlay()));
+    connect(&washTimer, SIGNAL(timeout()), this, SLOT(wash()));
     setInterval(ui->horizontalSlider->value());
 }
 
@@ -142,7 +144,10 @@ void MainWindow::setInterval(int value)
     // then a = log(fastest / 1000) / 99
     static double fastest = 50;
     static double a = log(fastest / 1000) / 99;
-    timer.setInterval(int(1000 * exp(a * value)));
+    auto interval = 1000 * exp(a * value);
+    timer.setInterval(int(interval));
+    // wash will speed up to 4 times
+    washTimer.setInterval(int(interval / 4));
 }
 
 void MainWindow::inputSound()
@@ -189,6 +194,14 @@ void MainWindow::splitSound2()
 
 void MainWindow::updatePushbutton()
 {
+    if(washing)
+    {
+        ui->pushButton_next->setEnabled(false);
+        ui->pushButton_play->setEnabled(false);
+        ui->pushButton_reset->setEnabled(false);
+        ui->pushButton_last->setEnabled(false);
+        return;
+    }
     auto over = manager->over();
     ui->pushButton_play->setEnabled(!over);
     ui->pushButton_last->setEnabled(!manager->cleaner && manager->getT());
@@ -234,7 +247,12 @@ void MainWindow::loadFile()
 
 void MainWindow::reset()
 {
+    if(manager->cleaner)
+    {
+        manager->initalize(false);
+    }
     manager->reset();
+
     if(manager->getLastT() > -1)
     {
         ui->pushButton_next->setEnabled(true);
@@ -242,7 +260,7 @@ void MainWindow::reset()
     }
     hidePollution();
     ui->lcdNumber->display(0);
-    ui->widget->updateImage();
+    ui->widget->updateBackground();
     updatePushbutton();
     update();
 }
@@ -297,6 +315,9 @@ void MainWindow::updateDMFB()
 
     ui->lcdNumber->display(manager->getT());
     ui->widget->updateImage();
+
+    checkWash();
+
 }
 
 void MainWindow::setShowPollution()
@@ -317,4 +338,90 @@ void MainWindow::hidePollution()
     ui->pushButton_last->setEnabled(!manager->cleaner);
     ui->lcdNumber->display(manager->getT());
     ui->widget->updateImage();
+}
+
+void MainWindow::wash()
+{
+    if(manager->wash())
+    {
+        ui->widget->updateImage();
+        return;
+    }
+    washing = false;
+    washTimer.stop();
+    if(isPlaying)
+        timer.start();
+    updatePushbutton();
+    ui->widget->updateImage();
+}
+
+bool MainWindow::checkWash()
+{
+    if(manager->cleaner && manager->wash())
+    {
+        washing = true;
+        timer.stop();
+        washTimer.start();
+        updatePushbutton();
+        ui->widget->updateImage();
+        return true;
+    }
+    return false;
+}
+
+void MainWindow::keyPressEvent(QKeyEvent * e)
+{
+    if(!e->isAutoRepeat())
+    {
+        switch(e->key())
+        {
+        case Qt::Key::Key_O:
+            setOption();
+            break;
+        case Qt::Key::Key_L:
+            loadFile();
+            break;
+        case Qt::Key::Key_Escape:
+            close();
+            break;
+        case Qt::Key::Key_Left:
+        case Qt::Key::Key_A:
+            ui->pushButton_last->animateClick();
+            break;
+        case Qt::Key::Key_Space:
+        case Qt::Key::Key_P:
+            ui->pushButton_play->animateClick();
+            break;
+        case Qt::Key::Key_Right:
+        case Qt::Key::Key_D:
+            ui->pushButton_next->animateClick();
+            break;
+        case Qt::Key::Key_R:
+            ui->pushButton_reset->animateClick();
+            break;
+        case Qt::Key::Key_Up:
+            ui->horizontalSlider->setValue(ui->horizontalSlider->value() + 1);
+            break;
+        case Qt::Key::Key_Down:
+            ui->horizontalSlider->setValue(ui->horizontalSlider->value() - 1);
+            break;
+        default:
+            break;
+        }
+    }
+    else
+    {
+        switch(e->key())
+        {
+        case Qt::Key::Key_Up:
+            ui->horizontalSlider->setValue(ui->horizontalSlider->value() + 2);
+            break;
+        case Qt::Key::Key_Down:
+            ui->horizontalSlider->setValue(ui->horizontalSlider->value() - 2);
+            break;
+        default:
+            break;
+        }
+    }
+    QMainWindow::keyPressEvent(e);
 }

@@ -26,6 +26,7 @@ public:
 protected:
     static void registeItem(DropItem *);
     DropID id;
+    static QMap<DropID, DropItem *> idToItem;
 
 private:
     int pos;
@@ -33,7 +34,6 @@ private:
     static DropID next_id;
     const static DropID start_id;
 
-    static QMap<DropID, DropItem *> idToItem;
 };
 
 class DropMark;
@@ -79,6 +79,7 @@ public:
 
     static DropMark * create(DropID id, QColor color);
     virtual bool isLargeDrop();
+    Drop * getDrop();
 
 private:
 

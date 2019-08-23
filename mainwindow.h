@@ -17,6 +17,7 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+    void keyPressEvent(QKeyEvent *);
 
 public slots:
     void setOption();
@@ -27,6 +28,7 @@ public slots:
     void setInterval(int);
     void updatePlay();
     void reset();
+    void wash();
 
     void inputSound();
     void outputSound();
@@ -48,9 +50,14 @@ private:
 
     void updateDMFB();
     QTimer timer;
+    QTimer washTimer;
     void updatePushbutton();
     void setShowPollution();
     void hidePollution();
+
+
+    bool checkWash();
+    bool washing;
 };
 
 #endif // MAINWINDOW_H

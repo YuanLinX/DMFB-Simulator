@@ -164,11 +164,16 @@ bool DropMark::isLargeDrop()
     return false;
 }
 
+Drop * DropMark::getDrop()
+{
+    return static_cast<Drop *>(idToItem[-id]);
+}
+
 /*******************CleanerDrop Class***************************/
 
 CleanerDrop::CleanerDrop(int pos): DropItem (getNewID(), pos)
 {
-
+    color = QColor("royalblue");
 }
 
 CleanerDrop * CleanerDrop::create(int pos)

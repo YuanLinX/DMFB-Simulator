@@ -27,7 +27,7 @@ public:
     void addInstruction(QString s);
     bool next();
     bool last();
-    void initalize();
+    void initalize(bool reload=true);
     void reset();
     QList <QString> errorInfo;
     QVector <QSet<DropItem *>> pollute;
@@ -46,10 +46,7 @@ public:
     void setObstacle(int pos);
     bool getObstacle(int pos);
     bool isWashing();
-
-    // return if wash is finished
     bool wash();
-
 
 private:
     enum Mask
@@ -57,9 +54,15 @@ private:
         NONE,
         // zone of control
         ZOC,
-        DROP,
-        DROPMARK
+        DROP
+    };
 
+    enum SearchMark
+    {
+        UNVISITED,
+        OBSTACLE,
+        PATH,
+        TARGET,
     };
 
     // first for t, second for pos
@@ -70,12 +73,33 @@ private:
 
     QVector <DropItem *> drops;
     QVector <bool> obstacle;
+    QVector <SearchMark> wash_map;
 
     QMap <QString, InstructionType> nameToType;
     int t;
     int lastInstructionT;
+    int lastT;
     bool washing;
     CleanerDrop * washer;
+    QList <int> targetList;
+    QVector <int> distance;
+    QVector <int> comeFrom;
+    QList <int> path;
+
+    bool putWasher();
+    void outWasher();
+    // dfs
+    void searchPath(int pos);
+    // bfs
+    bool reachable(int pos);
+    void updateDistance();
+    void washerMove(int pos);
+    void getPath(int pos);
+    int getNextTarget();
+
+
+    static const int washPos = 0;
+    int wastePos;
 
     bool loadState(int target);
     bool executeInstruction(Instruction *);

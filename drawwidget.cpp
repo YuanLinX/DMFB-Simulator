@@ -95,13 +95,13 @@ void DrawWidget::updateBackground()
         auto pos = getDrawPos(x, y, row, col);
         x = pos.first;
         y = pos.second;
-        drawText(p, x, y, "Input", QColor("red"));
+        drawText(p, x, y, "Input", QColor("orangered"));
     }
     // draw output
     {
         int output = manager->output;
         auto pos = getDrawPos(output % col, output / col, row, col);
-        drawText(p, pos.first, pos.second, "Output", QColor("blue"));
+        drawText(p, pos.first, pos.second, "Output", QColor("powderblue"));
     }
     // draw cleaner
     if(manager->cleaner)
@@ -111,7 +111,7 @@ void DrawWidget::updateBackground()
         drawText(p, wash.first, wash.second, "Wash", QColor("cyan"));
         drawText(p, waste.first, waste.second, "Waste", QColor("green"));
         // draw obstacle
-        p.setPen(QPen(QColor("indianred"), 3));
+        p.setPen(QPen(QColor("red"), 3));
         for (int pos = 0; pos < row * col; pos++)
         {
             if(manager->getObstacle(pos))
@@ -188,7 +188,7 @@ void DrawWidget::mousePressEvent(QMouseEvent * e)
     auto x = (_pos.x() - edge_x) / len_x - 1;
     auto y = (_pos.y() - edge_y) / len_y - 1;
     auto pos = y * col + x;
-    if(manager->cleaner && 0 <= pos && pos < row * col)
+    if(manager->cleaner && ! manager->isWashing() && 0 <= pos && pos < row * col)
     {
         // click some rect
         manager->setObstacle(pos);
