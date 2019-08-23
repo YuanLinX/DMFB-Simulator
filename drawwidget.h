@@ -26,8 +26,10 @@ public:
     DMFB * manager;
     QSize getPreferredSize();
     void updateSize(QSize=QSize());
+    void updateBackground();
     void updateImage();
     void resizeEvent(QResizeEvent *);
+    void mousePressEvent(QMouseEvent *);
     bool drawPollution;
 
 private:
@@ -35,9 +37,7 @@ private:
     int edge_y;
     int len_x;
     int len_y;
-    void drawInput(QPainter &, int x, int y);
-    void drawOutput(QPainter &, int x, int y);
-    void drawNumber(QPainter &, int x, int y, int num);
+    void drawText(QPainter & p, int x, int y, QString s, const QBrush & brush);
     auto getDrawPos(int x, int y, int row, int col);
     QPixmap backimage;
     QPixmap image;

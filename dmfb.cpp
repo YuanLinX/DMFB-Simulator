@@ -2,7 +2,7 @@
 #include <QDebug>
 #include "functions.h"
 
-DMFB::DMFB(): row(3), col(3), inputs({3}), output(5)
+DMFB::DMFB(): row(3), col(3), inputs({3}), output(5), cleaner(false), washing(false)
 {
     nameToType["input"] = INPUT;
     nameToType["output"] = OUTPUT;
@@ -29,6 +29,11 @@ void DMFB::initalize()
     instructions.resize(max_t);
     memset(mask, 0, sizeof(mask));
     memset(last_mask, 0, sizeof(last_mask));
+    if(cleaner)
+    {
+        obstacle.resize(col * row);
+        obstacle.fill(false);
+    }
 }
 
 void DMFB::clear()
@@ -38,6 +43,7 @@ void DMFB::clear()
     SplitSave.clear();
     pollute.clear();
     drops.clear();
+    obstacle.clear();
     clearDrops();
 }
 
@@ -63,6 +69,21 @@ void DMFB::clearDrops()
 auto DMFB::getAllInstructions()
 {
     return instructions;
+}
+
+void DMFB::setObstacle(int pos)
+{
+    obstacle[pos] = !obstacle[pos];
+}
+
+bool DMFB::getObstacle(int pos)
+{
+    return obstacle[pos];
+}
+
+bool DMFB::isWashing()
+{
+    return washing;
 }
 
 auto DMFB::getInstructionList(int t)
@@ -221,6 +242,7 @@ bool DMFB::loadState(int target)
         }
     }
     // get sound flag
+    flag = {};
     for(auto & ins: instructions[target - 1])
     {
         switch (ins->type)

@@ -62,14 +62,22 @@ void DrawWidget::updateSize(QSize size)
     edge_y = height / 10;
     len_x = (width - edge_x * 2) / col;
     len_y = (height - edge_y * 2) / row;
-    backimage = QPixmap(width, height);
+
+    updateBackground();
+
+}
+
+void DrawWidget::updateBackground()
+{
+    backimage = QPixmap(size());
     QPainter p(&backimage);
+    p.setRenderHint(QPainter::Antialiasing, true);
     p.setBrush(background);
     p.drawRect(0, 0, this->width() - 1, this->height()- 1);
     p.translate(edge_x + len_x, edge_y + len_y);
 
-    row -= 2;
-    col -= 2;
+    auto row = manager->row;
+    auto col = manager->col;
     // draw grid
     for(int r = 0;r <= row; r++)
     {
@@ -87,16 +95,36 @@ void DrawWidget::updateSize(QSize size)
         auto pos = getDrawPos(x, y, row, col);
         x = pos.first;
         y = pos.second;
-        drawInput(p, x, y);
+        drawText(p, x, y, "Input", QColor("red"));
     }
     // draw output
     {
         int output = manager->output;
         auto pos = getDrawPos(output % col, output / col, row, col);
-        drawOutput(p, pos.first, pos.second);
+        drawText(p, pos.first, pos.second, "Output", QColor("blue"));
     }
-    p.end();
+    // draw cleaner
+    if(manager->cleaner)
+    {
+        auto wash = getDrawPos(0, 0, row, col);
+        auto waste = getDrawPos(col - 1, row - 1, row, col);
+        drawText(p, wash.first, wash.second, "Wash", QColor("cyan"));
+        drawText(p, waste.first, waste.second, "Waste", QColor("green"));
+        // draw obstacle
+        p.setPen(QPen(QColor("indianred"), 3));
+        for (int pos = 0; pos < row * col; pos++)
+        {
+            if(manager->getObstacle(pos))
+            {
+                auto x = pos % col;
+                auto y = pos / col;
+                p.drawLine(x * len_x, y * len_y, (x + 1) * len_x, (y + 1) * len_y);
+                p.drawLine((x + 1) * len_x, y * len_y, x * len_x, (y + 1) * len_y);
+            }
+        }
+    }
 
+    p.end();
     updateImage();
 }
 
@@ -108,51 +136,21 @@ inline double getScale(const QPainter & p, const QRect & r, const QString & str)
     return scals_x > scals_y ? scals_y : scals_x;
 }
 
-void DrawWidget::drawInput(QPainter & p, int x, int y)
+void DrawWidget::drawText(QPainter &p, int x, int y, QString s, const QBrush & brush)
 {
     p.save();
-    p.setBrush(QColor("red"));
-    QString str("Input");
-
     QRect r(x * len_x, y * len_y, len_x, len_y);
-    p.drawRect(r);
+    if(brush.style() != Qt::NoBrush)
+    {
+        p.setBrush(brush);
+        p.drawRect(r);
+    }
 
     auto font = p.font();
-    font.setPointSizeF(getScale(p, r, str) * 0.8 * font.pointSizeF());
+    font.setPointSizeF(getScale(p, r, s) * 0.8 * font.pointSizeF());
     font.setFamily("Consolas");
     p.setFont(font);
-    p.drawText(r, Qt::AlignCenter, "Input");
-    p.restore();
-}
-
-void DrawWidget::drawOutput(QPainter & p, int x, int y)
-{
-    p.save();
-    p.setBrush(QColor("blue"));
-    QString str("Output");
-
-    QRect r(x * len_x, y * len_y, len_x, len_y);
-    p.drawRect(r);
-
-    auto font = p.font();
-    font.setPointSizeF(getScale(p, r, str) * 0.8 * font.pointSizeF());
-    font.setFamily("Consolas");
-    p.setFont(font);
-    p.drawText(r, Qt::AlignCenter, "Output");
-    p.restore();
-}
-
-void DrawWidget::drawNumber(QPainter & p, int x, int y, int num)
-{
-    p.save();
-    QString str = QString("%1").arg(num);
-    QRect r(x * len_x, y * len_y, len_x, len_y);
-
-    auto font = p.font();
-    font.setPointSizeF(getScale(p, r, str) * 0.8 * font.pointSizeF());
-    font.setFamily("Consolas");
-    p.setFont(font);
-    p.drawText(r, Qt::AlignCenter, str);
+    p.drawText(r, Qt::AlignCenter, s);
     p.restore();
 }
 
@@ -182,6 +180,24 @@ void DrawWidget::paintEvent(QPaintEvent * e)
     QWidget::paintEvent(e);
 }
 
+void DrawWidget::mousePressEvent(QMouseEvent * e)
+{
+    auto _pos = e->pos();
+    auto col = manager->col;
+    auto row = manager->row;
+    auto x = (_pos.x() - edge_x) / len_x - 1;
+    auto y = (_pos.y() - edge_y) / len_y - 1;
+    auto pos = y * col + x;
+    if(manager->cleaner && 0 <= pos && pos < row * col)
+    {
+        // click some rect
+        manager->setObstacle(pos);
+        updateBackground();
+
+    }
+    QWidget::mousePressEvent(e);
+}
+
 void DrawWidget::updateImage()
 {
     if(!manager)
@@ -198,7 +214,8 @@ void DrawWidget::updateImage()
         p.setPen(QColor("black"));
         for(int pos = 0; pos < col * row; pos++)
         {
-            drawNumber(p, pos % col, pos / col, manager->pollute[pos].size());
+            auto s = QString("%1").arg(manager->pollute[pos].size());
+            drawText(p, pos % col, pos / col, s, Qt::NoBrush);
         }
     }
     else

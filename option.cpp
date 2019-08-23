@@ -27,6 +27,10 @@ Option::~Option()
 
 void Option::accept()
 {
+
+    // cleaner occupy (0, 0) and (col - 1, row - 1)
+    cleaner = ui->checkBox->isChecked();
+
     // check size
     row = ui->spinBox_row->value();
     col = ui->spinBox_col->value();
@@ -50,6 +54,11 @@ void Option::accept()
         return;
     }
     output = output_y * col + output_x;
+    if(cleaner && ( output == 0 || output == (col * row - 1)))
+    {
+        QMessageBox::critical(this, "output port error", "same port for output and cleaner!");
+        return;
+    }
 
     // check input ports
     inputs.clear();
@@ -81,12 +90,13 @@ void Option::accept()
                 return;
             }
         }
+        if(cleaner && ( input == 0 || input == (col * row - 1)))
+        {
+            QMessageBox::critical(this, "intput port error", "same port for input and cleaner!");
+            return;
+        }
         inputs.append(input);
     }
-
-    // check
-    cleaner = ui->checkBox->isChecked();
-
 
     QDialog::accept();
 }

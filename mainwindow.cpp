@@ -48,6 +48,7 @@ void MainWindow::setOption()
         manager->col = option.col;
         manager->output = option.output;
         manager->inputs = option.inputs;
+        manager->cleaner = option.cleaner;
         manager->initalize();
         auto widget_size = ui->widget->getPreferredSize();
         widget_size.setWidth(int(widget_size.width() * 1.6));
@@ -190,12 +191,12 @@ void MainWindow::updatePushbutton()
 {
     auto over = manager->over();
     ui->pushButton_play->setEnabled(!over);
-    ui->pushButton_last->setEnabled(manager->getT());
+    ui->pushButton_last->setEnabled(!manager->cleaner && manager->getT());
     ui->pushButton_reset->setEnabled(manager->getT());
 
     if(manager->normalOver())
     {
-        ui->pushButton_next->setText("result");
+        ui->pushButton_next->setText("report");
         ui->pushButton_next->setEnabled(!showPollution);
     }
     else
@@ -303,7 +304,8 @@ void MainWindow::setShowPollution()
     showPollution = true;
     ui->widget->drawPollution = true;
     ui->pushButton_next->setEnabled(false);
-    ui->lcdNumber->display("END");
+    ui->pushButton_last->setEnabled(true);
+    ui->lcdNumber->display("---");
     ui->widget->updateImage();
 }
 
@@ -312,6 +314,7 @@ void MainWindow::hidePollution()
     showPollution = false;
     ui->widget->drawPollution = false;
     ui->pushButton_next->setEnabled(true);
+    ui->pushButton_last->setEnabled(!manager->cleaner);
     ui->lcdNumber->display(manager->getT());
     ui->widget->updateImage();
 }
