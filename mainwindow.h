@@ -25,9 +25,11 @@ public slots:
     void on_pushButton_play_clicked();
     void on_pushButton_last_clicked();
     void on_pushButton_next_clicked();
+    void on_pushButton_reset_clicked();
+    void showAbout();
+    void showInstruction();
     void setInterval(int);
     void updatePlay();
-    void reset();
     void wash();
 
     void inputSound();
@@ -54,6 +56,7 @@ private:
     void updatePushbutton();
     void setShowPollution();
     void hidePollution();
+    void reset();
 
 
     bool checkWash();

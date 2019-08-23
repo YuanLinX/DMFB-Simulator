@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>454</width>
+    <width>490</width>
     <height>552</height>
    </rect>
   </property>
@@ -68,19 +68,6 @@
       </item>
      </layout>
     </item>
-    <item row="1" column="0">
-     <spacer name="horizontalSpacer">
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
-      </property>
-      <property name="sizeHint" stdset="0">
-       <size>
-        <width>59</width>
-        <height>20</height>
-       </size>
-      </property>
-     </spacer>
-    </item>
     <item row="1" column="1">
      <widget class="DrawWidget" name="widget" native="true">
       <property name="sizePolicy">
@@ -97,8 +84,8 @@
       </property>
      </widget>
     </item>
-    <item row="1" column="2">
-     <spacer name="horizontalSpacer_2">
+    <item row="1" column="0">
+     <spacer name="horizontalSpacer">
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
       </property>
@@ -124,6 +111,25 @@
          </size>
         </property>
        </spacer>
+      </item>
+      <item>
+       <widget class="QSlider" name="horizontalSlider">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="focusPolicy">
+         <enum>Qt::NoFocus</enum>
+        </property>
+        <property name="value">
+         <number>0</number>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
       </item>
       <item>
        <widget class="QPushButton" name="pushButton_last">
@@ -219,55 +225,18 @@
       </item>
      </layout>
     </item>
-    <item row="3" column="1">
-     <layout class="QHBoxLayout" name="horizontalLayout_3">
-      <item>
-       <spacer name="horizontalSpacer_9">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>40</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item>
-       <widget class="QLabel" name="label_2">
-        <property name="text">
-         <string>play speed</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QSlider" name="horizontalSlider">
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
-        </property>
-        <property name="value">
-         <number>0</number>
-        </property>
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <spacer name="horizontalSpacer_10">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>40</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-     </layout>
+    <item row="1" column="2">
+     <spacer name="horizontalSpacer_2">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>59</width>
+        <height>20</height>
+       </size>
+      </property>
+     </spacer>
     </item>
    </layout>
   </widget>
@@ -276,7 +245,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>454</width>
+     <width>490</width>
      <height>22</height>
     </rect>
    </property>
@@ -284,11 +253,29 @@
     <property name="title">
      <string>Start(&amp;S)</string>
     </property>
-    <addaction name="actionoption"/>
-    <addaction name="actionload"/>
-    <addaction name="actionexit"/>
+    <addaction name="actionLoad"/>
+    <addaction name="actionOption"/>
+    <addaction name="actionExit"/>
+   </widget>
+   <widget class="QMenu" name="menuRun">
+    <property name="title">
+     <string>Run(&amp;R)</string>
+    </property>
+    <addaction name="actionPlay"/>
+    <addaction name="actionLast"/>
+    <addaction name="actionNext"/>
+    <addaction name="actionReset"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp_H">
+    <property name="title">
+     <string>Help(&amp;H)</string>
+    </property>
+    <addaction name="actionInstruction"/>
+    <addaction name="actionAbout"/>
    </widget>
    <addaction name="menustart"/>
+   <addaction name="menuRun"/>
+   <addaction name="menuHelp_H"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -297,30 +284,99 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
+   <addaction name="actionLoad"/>
+   <addaction name="actionOption"/>
+   <addaction name="actionExit"/>
+   <addaction name="separator"/>
+   <addaction name="actionLast"/>
+   <addaction name="actionPlay"/>
+   <addaction name="actionNext"/>
+   <addaction name="actionReset"/>
+   <addaction name="separator"/>
+   <addaction name="actionInstruction"/>
+   <addaction name="actionAbout"/>
+   <addaction name="separator"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
-  <action name="actionoption">
+  <action name="actionOption">
+   <property name="icon">
+    <iconset resource="png.qrc">
+     <normaloff>:/png/option.png</normaloff>:/png/option.png</iconset>
+   </property>
    <property name="text">
     <string>Option(&amp;O)</string>
    </property>
-   <property name="shortcut">
-    <string>Ctrl+O</string>
-   </property>
   </action>
-  <action name="actionload">
+  <action name="actionLoad">
+   <property name="icon">
+    <iconset resource="png.qrc">
+     <normaloff>:/png/open-file.png</normaloff>:/png/open-file.png</iconset>
+   </property>
    <property name="text">
     <string>Load(&amp;L)</string>
    </property>
-   <property name="shortcut">
-    <string>Ctrl+L</string>
-   </property>
   </action>
-  <action name="actionexit">
+  <action name="actionExit">
+   <property name="icon">
+    <iconset resource="png.qrc">
+     <normaloff>:/png/power-button.png</normaloff>:/png/power-button.png</iconset>
+   </property>
    <property name="text">
     <string>Exit(&amp;E)</string>
    </property>
-   <property name="shortcut">
-    <string>Ctrl+E</string>
+  </action>
+  <action name="actionPlay">
+   <property name="icon">
+    <iconset resource="png.qrc">
+     <normaloff>:/png/play-1.png</normaloff>:/png/play-1.png</iconset>
+   </property>
+   <property name="text">
+    <string>Play(&amp;P)</string>
+   </property>
+  </action>
+  <action name="actionLast">
+   <property name="icon">
+    <iconset resource="png.qrc">
+     <normaloff>:/png/last.png</normaloff>:/png/last.png</iconset>
+   </property>
+   <property name="text">
+    <string>Last(&amp;L)</string>
+   </property>
+  </action>
+  <action name="actionNext">
+   <property name="icon">
+    <iconset resource="png.qrc">
+     <normaloff>:/png/next-2.png</normaloff>:/png/next-2.png</iconset>
+   </property>
+   <property name="text">
+    <string>Next(&amp;N)</string>
+   </property>
+  </action>
+  <action name="actionReset">
+   <property name="icon">
+    <iconset resource="png.qrc">
+     <normaloff>:/png/reset.png</normaloff>:/png/reset.png</iconset>
+   </property>
+   <property name="text">
+    <string>Reset(&amp;R)</string>
+   </property>
+  </action>
+  <action name="actionInstruction">
+   <property name="icon">
+    <iconset resource="png.qrc">
+     <normaloff>:/png/instruction.png</normaloff>:/png/instruction.png</iconset>
+   </property>
+   <property name="text">
+    <string>Instruction(&amp;I)</string>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="icon">
+    <iconset resource="png.qrc">
+     <normaloff>:/png/about.png</normaloff>:/png/about.png</iconset>
+   </property>
+   <property name="text">
+    <string>About(&amp;A)</string>
    </property>
   </action>
  </widget>
@@ -333,10 +389,12 @@
    <container>1</container>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="png.qrc"/>
+ </resources>
  <connections>
   <connection>
-   <sender>actionoption</sender>
+   <sender>actionOption</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>setOption()</slot>
@@ -352,7 +410,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>actionload</sender>
+   <sender>actionLoad</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>loadFile()</slot>
@@ -368,7 +426,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>actionexit</sender>
+   <sender>actionExit</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>close()</slot>
@@ -390,8 +448,8 @@
    <slot>setInterval(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>274</x>
-     <y>502</y>
+     <x>105</x>
+     <y>516</y>
     </hint>
     <hint type="destinationlabel">
      <x>413</x>
@@ -400,18 +458,98 @@
    </hints>
   </connection>
   <connection>
-   <sender>pushButton_reset</sender>
-   <signal>clicked()</signal>
+   <sender>actionInstruction</sender>
+   <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
-   <slot>reset()</slot>
+   <slot>showInstruction()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>381</x>
-     <y>476</y>
+     <x>-1</x>
+     <y>-1</y>
     </hint>
     <hint type="destinationlabel">
-     <x>428</x>
-     <y>480</y>
+     <x>244</x>
+     <y>275</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionAbout</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>showAbout()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>244</x>
+     <y>275</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionLast</sender>
+   <signal>triggered()</signal>
+   <receiver>pushButton_last</receiver>
+   <slot>click()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>151</x>
+     <y>509</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionNext</sender>
+   <signal>triggered()</signal>
+   <receiver>pushButton_next</receiver>
+   <slot>click()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>335</x>
+     <y>509</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionPlay</sender>
+   <signal>triggered()</signal>
+   <receiver>pushButton_play</receiver>
+   <slot>click()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>243</x>
+     <y>509</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionReset</sender>
+   <signal>triggered()</signal>
+   <receiver>pushButton_reset</receiver>
+   <slot>click()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>427</x>
+     <y>509</y>
     </hint>
    </hints>
   </connection>
@@ -419,10 +557,9 @@
  <slots>
   <slot>setOption()</slot>
   <slot>loadFile()</slot>
-  <slot>showLast()</slot>
-  <slot>showNext()</slot>
-  <slot>play()</slot>
   <slot>setInterval(int)</slot>
   <slot>reset()</slot>
+  <slot>showAbout()</slot>
+  <slot>showInstruction()</slot>
  </slots>
 </ui>

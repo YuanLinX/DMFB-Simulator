@@ -1,0 +1,13 @@
+<RCC>
+    <qresource prefix="/">
+        <file>png/about.png</file>
+        <file>png/instruction.png</file>
+        <file>png/last.png</file>
+        <file>png/next-2.png</file>
+        <file>png/open-file.png</file>
+        <file>png/option.png</file>
+        <file>png/play-1.png</file>
+        <file>png/power-button.png</file>
+        <file>png/reset.png</file>
+    </qresource>
+</RCC>

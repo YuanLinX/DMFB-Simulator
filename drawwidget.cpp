@@ -187,11 +187,10 @@ void DrawWidget::mousePressEvent(QMouseEvent * e)
     auto row = manager->row;
     auto x = (_pos.x() - edge_x) / len_x - 1;
     auto y = (_pos.y() - edge_y) / len_y - 1;
-    auto pos = y * col + x;
-    if(manager->cleaner && ! manager->isWashing() && 0 <= pos && pos < row * col)
+    if(manager->cleaner && ! manager->isWashing() && 0 <= x && x < col && 0 <= y && y < row)
     {
         // click some rect
-        manager->setObstacle(pos);
+        manager->setObstacle(y * col + x);
         updateBackground();
 
     }

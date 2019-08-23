@@ -28,10 +28,15 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->pushButton_next->setEnabled(false);
     ui->pushButton_play->setEnabled(false);
     ui->pushButton_reset->setEnabled(false);
+    ui->pushButton_last->setVisible(false);
+    ui->pushButton_next->setVisible(false);
+    ui->pushButton_play->setVisible(false);
+    ui->pushButton_reset->setVisible(false);
 
     connect(&timer, SIGNAL(timeout()), this, SLOT(updatePlay()));
     connect(&washTimer, SIGNAL(timeout()), this, SLOT(wash()));
     setInterval(ui->horizontalSlider->value());
+    ui->mainToolBar->addWidget(ui->horizontalSlider);
 }
 
 MainWindow::~MainWindow()
@@ -92,6 +97,8 @@ auto MainWindow::getDrawPos(int x, int y, int row, int col)
 
 void MainWindow::on_pushButton_play_clicked()
 {
+    if(!ui->pushButton_play->isEnabled())
+        return;
     if(isPlaying)
     {
         timer.stop();
@@ -113,6 +120,8 @@ void MainWindow::on_pushButton_play_clicked()
 
 void MainWindow::on_pushButton_last_clicked()
 {
+    if(!ui->pushButton_last->isEnabled())
+        return;
     if(showPollution)
     {
         hidePollution();
@@ -126,6 +135,8 @@ void MainWindow::on_pushButton_last_clicked()
 
 void MainWindow::on_pushButton_next_clicked()
 {
+    if(!ui->pushButton_next->isEnabled())
+        return;
     if(manager->normalOver())
     {
         setShowPollution();
@@ -135,6 +146,25 @@ void MainWindow::on_pushButton_next_clicked()
         reverse = false;
         updateDMFB();
     }
+}
+
+
+void MainWindow::on_pushButton_reset_clicked()
+{
+
+    if(!ui->pushButton_reset->isEnabled())
+        return;
+    reset();
+}
+
+void MainWindow::showAbout()
+{
+
+}
+
+void MainWindow::showInstruction()
+{
+
 }
 
 void MainWindow::setInterval(int value)
