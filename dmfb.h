@@ -47,6 +47,9 @@ public:
     bool getObstacle(int pos);
     bool isWashing();
 
+    // return if wash is finished
+    bool wash();
+
 
 private:
     enum Mask
@@ -72,6 +75,7 @@ private:
     int t;
     int lastInstructionT;
     bool washing;
+    CleanerDrop * washer;
 
     bool loadState(int target);
     bool executeInstruction(Instruction *);

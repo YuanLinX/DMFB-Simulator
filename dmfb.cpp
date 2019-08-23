@@ -2,7 +2,7 @@
 #include <QDebug>
 #include "functions.h"
 
-DMFB::DMFB(): row(3), col(3), inputs({3}), output(5), cleaner(false), washing(false)
+DMFB::DMFB(): row(3), col(3), inputs({3}), output(5), cleaner(false), washing(false), washer(nullptr)
 {
     nameToType["input"] = INPUT;
     nameToType["output"] = OUTPUT;
@@ -521,4 +521,9 @@ bool DMFB::check()
 bool DMFB::normalOver() const
 {
     return t > lastInstructionT && errorInfo.empty() && lastInstructionT > -1;
+}
+
+bool wash()
+{
+    return true;
 }
