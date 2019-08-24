@@ -71,10 +71,12 @@ void DrawWidget::updateSize(QSize size)
 void DrawWidget::updateBackground()
 {
     backimage = QPixmap(size());
+    backimage.fill(QColor(67,67,67));
     QPainter p(&backimage);
     p.setRenderHint(QPainter::Antialiasing, true);
     p.setBrush(background);
-    p.drawRect(0, 0, this->width() - 1, this->height()- 1);
+
+    p.drawRoundedRect(0, 0, width() - 1, height()- 1, width() / 20, height() / 20);
     p.translate(edge_x + len_x, edge_y + len_y);
 
     auto row = manager->row;
@@ -137,7 +139,7 @@ void DrawWidget::updateBackground()
     p.save();
     p.setBrush(Qt::black);
     for(int r = 0;r <= row; r++)
-        for(int c = 0;c <= row; c++)
+        for(int c = 0;c <= col; c++)
         {
             p.drawEllipse(len_x * c - len_x / 20, len_y * r - len_y / 20, len_x / 10, len_y / 10);
         }

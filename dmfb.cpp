@@ -281,7 +281,7 @@ bool DMFB::loadState(int target)
     flag.split2 = bool(SplitSave[target - 1].length());
     flag.merge2 = bool(MergeSave[target - 1].length());
 
-    if(t > lastInstructionT && errorInfo.length())
+    if(t > lastT && errorInfo.length())
         return false;
 
     return true;

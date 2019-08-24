@@ -75,10 +75,14 @@ void MainWindow::sound()
     if(playSound)
     {
         ui->actionSound->setIcon(QIcon(":/png/sound.png"));
+        if(washing)
+            washSound.play();
     }
     else
     {
         ui->actionSound->setIcon(QIcon(":/png/nosound.png"));
+        if(washing)
+            washSound.stop();
     }
 }
 
