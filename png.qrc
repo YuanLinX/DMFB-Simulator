@@ -3,11 +3,18 @@
         <file>png/about.png</file>
         <file>png/instruction.png</file>
         <file>png/last.png</file>
-        <file>png/next-2.png</file>
         <file>png/open-file.png</file>
         <file>png/option.png</file>
-        <file>png/play-1.png</file>
         <file>png/power-button.png</file>
         <file>png/reset.png</file>
+        <file>png/next.png</file>
+        <file>png/pause.png</file>
+        <file>png/play.png</file>
+        <file>png/icon.png</file>
+        <file>png/report.png</file>
+        <file>png/nosound.png</file>
+        <file>png/sound.png</file>
+        <file>png/icon2.jpg</file>
+        <file>png/icon3.png</file>
     </qresource>
 </RCC>

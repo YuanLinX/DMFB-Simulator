@@ -14,10 +14,39 @@
    <enum>Qt::StrongFocus</enum>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>DMFB</string>
   </property>
   <property name="styleSheet">
-   <string notr="true"/>
+   <string notr="true">QMainWindow
+{
+	background-color: rgb(67, 67, 67);
+}
+
+QMenuBar
+{
+	background-color: rgb(35, 35, 35);
+	color: white;
+	border-bottom: 2px solid rgb(50,50,50);
+}
+
+QToolBar
+{
+	background-color: rgb(35,35,35);
+	border-bottom: 2px solid rgb(50,50,50);
+}
+
+QToolBar::separator
+{
+	background:rgb(50,50,50);
+	width: 2px;
+}
+
+QToolBar::handle
+{
+	color: rgb(50,50,50);
+}
+
+</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout">
@@ -37,17 +66,16 @@
        </spacer>
       </item>
       <item>
-       <widget class="QLabel" name="label">
-        <property name="text">
-         <string>Current Time:</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item>
        <widget class="QLCDNumber" name="lcdNumber">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">font-size: 50px</string>
+        </property>
         <property name="digitCount">
          <number>3</number>
         </property>
@@ -71,7 +99,7 @@
     <item row="1" column="1">
      <widget class="DrawWidget" name="widget" native="true">
       <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
         <horstretch>2</horstretch>
         <verstretch>2</verstretch>
        </sizepolicy>
@@ -123,8 +151,29 @@
         <property name="focusPolicy">
          <enum>Qt::NoFocus</enum>
         </property>
+        <property name="styleSheet">
+         <string notr="true">QSlider::groove:horizontal
+{
+	height: 10px;
+	left: 5px; 
+ 	right: 5px; 
+	background: #dcdcdc;
+}
+
+QSlider::handle:horizontal
+{
+	border-radius: 10px;
+	width:  20px;
+	margin: -5px -1px;
+	background: #2e2eff;
+}
+QSlider::sub-page:horizontal
+{
+	background: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(24, 44, 82, 255), stop:0.25 rgba(40, 73, 134, 255), stop:0.5 rgba(50, 80, 170, 255), stop:1 rgba(55, 125, 255, 255));
+}</string>
+        </property>
         <property name="value">
-         <number>0</number>
+         <number>20</number>
         </property>
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
@@ -293,6 +342,7 @@
    <addaction name="actionNext"/>
    <addaction name="actionReset"/>
    <addaction name="separator"/>
+   <addaction name="actionSound"/>
    <addaction name="actionInstruction"/>
    <addaction name="actionAbout"/>
    <addaction name="separator"/>
@@ -328,7 +378,7 @@
   <action name="actionPlay">
    <property name="icon">
     <iconset resource="png.qrc">
-     <normaloff>:/png/play-1.png</normaloff>:/png/play-1.png</iconset>
+     <normaloff>:/png/play.png</normaloff>:/png/play.png</iconset>
    </property>
    <property name="text">
     <string>Play(&amp;P)</string>
@@ -346,7 +396,7 @@
   <action name="actionNext">
    <property name="icon">
     <iconset resource="png.qrc">
-     <normaloff>:/png/next-2.png</normaloff>:/png/next-2.png</iconset>
+     <normaloff>:/png/next.png</normaloff>:/png/next.png</iconset>
    </property>
    <property name="text">
     <string>Next(&amp;N)</string>
@@ -377,6 +427,15 @@
    </property>
    <property name="text">
     <string>About(&amp;A)</string>
+   </property>
+  </action>
+  <action name="actionSound">
+   <property name="icon">
+    <iconset resource="png.qrc">
+     <normaloff>:/png/sound.png</normaloff>:/png/sound.png</iconset>
+   </property>
+   <property name="text">
+    <string>Sound</string>
    </property>
   </action>
  </widget>
@@ -553,6 +612,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>actionSound</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>sound()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>244</x>
+     <y>275</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>setOption()</slot>
@@ -561,5 +636,6 @@
   <slot>reset()</slot>
   <slot>showAbout()</slot>
   <slot>showInstruction()</slot>
+  <slot>sound()</slot>
  </slots>
 </ui>

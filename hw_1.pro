@@ -53,7 +53,8 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 RESOURCES += \
-    png.qrc
+    png.qrc \
+    sound.qrc \
+    txt.qrc
 
-DISTFILES += \
-    png/pause-2.png
+DISTFILES +=

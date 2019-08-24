@@ -1,0 +1,9 @@
+This is a simple instruction for this tool:
+1. Click icon option(shortcut: O) to set basic information for environment.
+2. Click icon load(shortcut: L) to choose input file.
+3. Click icon next(shortcut: D or Right) to go on. Specially, when you finish all operations, this bottom will show the pollution report.
+4. Click icon last(shortcut: A or Left) to go back.
+5. If you want to play continuous, icon play/pause(shortcut: P) will work. 
+6. Notice that the slider can adjust play speed(shortcut: W & S or Up & Down).
+7. You can click the cell to set/unset obstacle for wash drops on condition that you check "cleaner" button.
+8. Click icon voice(shortcut: V) to open/close voice;

@@ -8,6 +8,8 @@
 #include <QMessageBox>
 #include <QScreen>
 #include <QSound>
+#include <QMediaPlaylist>
+#include <QTextBrowser>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -16,13 +18,18 @@ MainWindow::MainWindow(QWidget *parent) :
     reverse(false),
     isPlaying(false),
     showPollution(false),
+    playSound(true),
+    washSound(":/sound/wash.wav"),
     washing(false)
+    //washSound(new QMediaPlayer(this, QMediaPlayer::LowLatency))
 {
     ui->setupUi(this);
     // set data for drawer
     ui->widget->manager = manager;
     // update layout for drawer
     ui->widget->updateSize();
+
+    setWindowIcon(QIcon(":/png/icon.png"));
 
     ui->pushButton_last->setEnabled(false);
     ui->pushButton_next->setEnabled(false);
@@ -32,11 +39,27 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->pushButton_next->setVisible(false);
     ui->pushButton_play->setVisible(false);
     ui->pushButton_reset->setVisible(false);
+    ui->actionLast->setEnabled(false);
+    ui->actionPlay->setEnabled(false);
+    ui->actionNext->setEnabled(false);
+    ui->actionReset->setEnabled(false);
+
 
     connect(&timer, SIGNAL(timeout()), this, SLOT(updatePlay()));
     connect(&washTimer, SIGNAL(timeout()), this, SLOT(wash()));
     setInterval(ui->horizontalSlider->value());
+    ui->mainToolBar->addWidget(ui->lcdNumber);
     ui->mainToolBar->addWidget(ui->horizontalSlider);
+
+    /*auto list = new QMediaPlaylist(washSound);
+    list->addMedia(QUrl(":/sound/wash.wav"));
+    list->setPlaybackMode(QMediaPlaylist::CurrentItemInLoop);
+    washSound->setPlaylist(list);*/
+
+    washSound.setLoops(-1);
+
+    showInstruction();
+
 }
 
 MainWindow::~MainWindow()
@@ -45,6 +68,20 @@ MainWindow::~MainWindow()
     if(manager)
         delete manager;
 }
+
+void MainWindow::sound()
+{
+    playSound = !playSound;
+    if(playSound)
+    {
+        ui->actionSound->setIcon(QIcon(":/png/sound.png"));
+    }
+    else
+    {
+        ui->actionSound->setIcon(QIcon(":/png/nosound.png"));
+    }
+}
+
 
 void MainWindow::setOption()
 {
@@ -101,10 +138,7 @@ void MainWindow::on_pushButton_play_clicked()
         return;
     if(isPlaying)
     {
-        timer.stop();
-        ui->pushButton_play->setText("play");
-        updatePushbutton();
-        isPlaying = false;
+        stopPlay();
     }
     else
     {
@@ -114,6 +148,10 @@ void MainWindow::on_pushButton_play_clicked()
         ui->pushButton_last->setEnabled(false);
         ui->pushButton_next->setEnabled(false);
         ui->pushButton_reset->setEnabled(false);
+        ui->actionPlay->setIcon(QIcon(":/png/pause.png"));
+        ui->actionNext->setEnabled(false);
+        ui->actionNext->setEnabled(false);
+        ui->actionReset->setEnabled(false);
         timer.start();
     }
 }
@@ -159,12 +197,21 @@ void MainWindow::on_pushButton_reset_clicked()
 
 void MainWindow::showAbout()
 {
-
+    QMessageBox::about(this, "about", "all rights reserved\nRao Congyuan 2019");
 }
 
 void MainWindow::showInstruction()
 {
-
+    const QString path(":/txt/instruction.txt");
+    QFile f(path);
+    if(!f.open(QIODevice::ReadOnly))
+    {
+        QMessageBox::warning(this, "warning", QString("can't find file ") + path);
+        return;
+    }
+    QTextStream text(&f);
+    QString s = text.readAll();
+    QMessageBox::information(this, "instruction", s);
 }
 
 void MainWindow::setInterval(int value)
@@ -180,46 +227,53 @@ void MainWindow::setInterval(int value)
     washTimer.setInterval(int(interval / 4));
 }
 
-void MainWindow::inputSound()
+void MainWindow::inputSound(bool flag)
 {
-    static QSound sound("sound/input.wav");
-    sound.play();
+    static QSound sound(":/sound/input.wav");
+    if(flag)
+        sound.play();
 }
 
-void MainWindow::outputSound()
+void MainWindow::outputSound(bool flag)
 {
-    static QSound sound("sound/output.wav");
-    sound.play();
+    static QSound sound(":/sound/output.wav");
+    if(flag)
+        sound.play();
 }
 
-void MainWindow::moveSound()
+void MainWindow::moveSound(bool flag)
 {
-    static QSound sound("sound/move.wav");
-    sound.play();
+    static QSound sound(":/sound/move.wav");
+    if(flag)
+        sound.play();
 }
 
-void MainWindow::mergeSound1()
+void MainWindow::mergeSound1(bool flag)
 {
-    static QSound sound("sound/merge1.wav");
-    sound.play();
+    static QSound sound(":/sound/merge1.wav");
+    if(flag)
+        sound.play();
 }
 
-void MainWindow::mergeSound2()
+void MainWindow::mergeSound2(bool flag)
 {
-    static QSound sound("sound/merge2.wav");
-    sound.play();
+    static QSound sound(":/sound/merge2.wav");
+    if(flag)
+        sound.play();
 }
 
-void MainWindow::splitSound1()
+void MainWindow::splitSound1(bool flag)
 {
-    static QSound sound("sound/split1.wav");
-    sound.play();
+    static QSound sound(":/sound/split1.wav");
+    if(flag)
+        sound.play();
 }
 
-void MainWindow::splitSound2()
+void MainWindow::splitSound2(bool flag)
 {
-    static QSound sound("sound/split2.wav");
-    sound.play();
+    static QSound sound(":/sound/split2.wav");
+    if(flag)
+        sound.play();
 }
 
 void MainWindow::updatePushbutton()
@@ -230,6 +284,10 @@ void MainWindow::updatePushbutton()
         ui->pushButton_play->setEnabled(false);
         ui->pushButton_reset->setEnabled(false);
         ui->pushButton_last->setEnabled(false);
+        ui->actionLast->setEnabled(false);
+        ui->actionReset->setEnabled(false);
+        ui->actionNext->setEnabled(false);
+        ui->actionPlay->setEnabled(false);
         return;
     }
     auto over = manager->over();
@@ -240,13 +298,19 @@ void MainWindow::updatePushbutton()
     if(manager->normalOver())
     {
         ui->pushButton_next->setText("report");
+        ui->actionNext->setIcon(QIcon(":/png/report.png"));
         ui->pushButton_next->setEnabled(!showPollution);
     }
     else
     {
         ui->pushButton_next->setText("next");
+        ui->actionNext->setIcon(QIcon(":/png/next.png"));
         ui->pushButton_next->setEnabled(!over);
     }
+    ui->actionLast->setEnabled(ui->pushButton_last->isEnabled());
+    ui->actionNext->setEnabled(ui->pushButton_next->isEnabled());
+    ui->actionPlay->setEnabled(ui->pushButton_play->isEnabled());
+    ui->actionReset->setEnabled(ui->pushButton_reset->isEnabled());
 }
 
 void MainWindow::loadFile()
@@ -283,11 +347,6 @@ void MainWindow::reset()
     }
     manager->reset();
 
-    if(manager->getLastT() > -1)
-    {
-        ui->pushButton_next->setEnabled(true);
-        ui->pushButton_play->setEnabled(true);
-    }
     hidePollution();
     ui->lcdNumber->display(0);
     ui->widget->updateBackground();
@@ -301,8 +360,17 @@ void MainWindow::updatePlay()
     if(manager->over())
     {
         timer.stop();
-        on_pushButton_play_clicked();
+        stopPlay();
     }
+}
+
+void MainWindow::stopPlay()
+{
+    timer.stop();
+    ui->pushButton_play->setText("play");
+    ui->actionPlay->setIcon(QIcon(":/png/play.png"));
+    updatePushbutton();
+    isPlaying = false;
 }
 
 void MainWindow::updateDMFB()
@@ -324,20 +392,16 @@ void MainWindow::updateDMFB()
         }
     }
     auto flag = manager->getFlag();
-    if(flag.input)
-        inputSound();
-    if(flag.output)
-        outputSound();
-    if(flag.move)
-        moveSound();
-    if(flag.merge1)
-        mergeSound1();
-    if(flag.merge2)
-        mergeSound2();
-    if(flag.split1)
-        splitSound1();
-    if(flag.split2)
-        splitSound2();
+    if(playSound)
+    {
+        inputSound(flag.input);
+        outputSound(flag.output);
+        moveSound(flag.move);
+        mergeSound1(flag.merge1);
+        mergeSound2(flag.merge2);
+        splitSound1(flag.split1);
+        splitSound2(flag.split2);
+    }
     if(!isPlaying)
     {
         updatePushbutton();
@@ -356,6 +420,8 @@ void MainWindow::setShowPollution()
     ui->widget->drawPollution = true;
     ui->pushButton_next->setEnabled(false);
     ui->pushButton_last->setEnabled(true);
+    ui->actionLast->setEnabled(ui->pushButton_last->isEnabled());
+    ui->actionNext->setEnabled(ui->pushButton_next->isEnabled());
     ui->lcdNumber->display("---");
     ui->widget->updateImage();
 }
@@ -366,6 +432,8 @@ void MainWindow::hidePollution()
     ui->widget->drawPollution = false;
     ui->pushButton_next->setEnabled(true);
     ui->pushButton_last->setEnabled(!manager->cleaner);
+    ui->actionLast->setEnabled(ui->pushButton_last->isEnabled());
+    ui->actionNext->setEnabled(ui->pushButton_next->isEnabled());
     ui->lcdNumber->display(manager->getT());
     ui->widget->updateImage();
 }
@@ -383,6 +451,7 @@ void MainWindow::wash()
         timer.start();
     updatePushbutton();
     ui->widget->updateImage();
+    washSound.stop();
 }
 
 bool MainWindow::checkWash()
@@ -392,6 +461,8 @@ bool MainWindow::checkWash()
         washing = true;
         timer.stop();
         washTimer.start();
+        if(playSound)
+            washSound.play();
         updatePushbutton();
         ui->widget->updateImage();
         return true;
@@ -401,57 +472,53 @@ bool MainWindow::checkWash()
 
 void MainWindow::keyPressEvent(QKeyEvent * e)
 {
-    if(!e->isAutoRepeat())
+    switch(e->key())
     {
-        switch(e->key())
-        {
-        case Qt::Key::Key_O:
-            setOption();
-            break;
-        case Qt::Key::Key_L:
-            loadFile();
-            break;
-        case Qt::Key::Key_Escape:
-            close();
-            break;
-        case Qt::Key::Key_Left:
-        case Qt::Key::Key_A:
-            ui->pushButton_last->animateClick();
-            break;
-        case Qt::Key::Key_Space:
-        case Qt::Key::Key_P:
-            ui->pushButton_play->animateClick();
-            break;
-        case Qt::Key::Key_Right:
-        case Qt::Key::Key_D:
-            ui->pushButton_next->animateClick();
-            break;
-        case Qt::Key::Key_R:
-            ui->pushButton_reset->animateClick();
-            break;
-        case Qt::Key::Key_Up:
-            ui->horizontalSlider->setValue(ui->horizontalSlider->value() + 1);
-            break;
-        case Qt::Key::Key_Down:
-            ui->horizontalSlider->setValue(ui->horizontalSlider->value() - 1);
-            break;
-        default:
-            break;
-        }
-    }
-    else
-    {
-        switch(e->key())
-        {
-        case Qt::Key::Key_Up:
-            ui->horizontalSlider->setValue(ui->horizontalSlider->value() + 2);
-            break;
-        case Qt::Key::Key_Down:
-            ui->horizontalSlider->setValue(ui->horizontalSlider->value() - 2);
-            break;
-        default:
-            break;
-        }
+    case Qt::Key::Key_O:
+        setOption();
+        break;
+    case Qt::Key::Key_L:
+        loadFile();
+        break;
+    case Qt::Key::Key_Escape:
+        close();
+        break;
+    case Qt::Key::Key_Left:
+    case Qt::Key::Key_A:
+        //ui->pushButton_last->animateClick();
+        on_pushButton_last_clicked();
+        break;
+    case Qt::Key::Key_Space:
+    case Qt::Key::Key_P:
+        //ui->pushButton_play->animateClick();
+        on_pushButton_play_clicked();
+        break;
+    case Qt::Key::Key_Right:
+    case Qt::Key::Key_D:
+        //ui->pushButton_next->animateClick();
+        on_pushButton_next_clicked();
+        break;
+    case Qt::Key::Key_R:
+        //ui->pushButton_reset->animateClick();
+        on_pushButton_reset_clicked();
+        break;
+    case Qt::Key::Key_Up:
+    case Qt::Key::Key_W:
+        // when press key for a time, silder will move faster
+        ui->horizontalSlider->setValue(ui->horizontalSlider->value() + 1 + e->isAutoRepeat());
+        break;
+    case Qt::Key::Key_Down:
+    case Qt::Key::Key_S:
+        ui->horizontalSlider->setValue(ui->horizontalSlider->value() - 1 - e->isAutoRepeat());
+        break;
+    case Qt::Key::Key_V:
+        sound();
+        break;
+    case Qt::Key::Key_I:
+        showInstruction();
+        break;
+    default:
+        break;
     }
     QMainWindow::keyPressEvent(e);
 }

@@ -42,6 +42,7 @@ private:
     QPixmap backimage;
     QPixmap image;
     static const QColor background;
+    static const QColor cell;
 
 };
 

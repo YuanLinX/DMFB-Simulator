@@ -5,6 +5,8 @@
 #include <QList>
 #include "dmfb.h"
 #include <QTimer>
+#include <QMediaPlayer>
+#include <QSound>
 
 namespace Ui {
 class MainWindow;
@@ -31,14 +33,15 @@ public slots:
     void setInterval(int);
     void updatePlay();
     void wash();
+    void sound();
 
-    void inputSound();
-    void outputSound();
-    void moveSound();
-    void mergeSound1();
-    void mergeSound2();
-    void splitSound1();
-    void splitSound2();
+    void inputSound(bool);
+    void outputSound(bool);
+    void moveSound(bool);
+    void mergeSound1(bool);
+    void mergeSound2(bool);
+    void splitSound1(bool);
+    void splitSound2(bool);
 
 private:
     Ui::MainWindow *ui;
@@ -49,6 +52,8 @@ private:
     bool isPlaying;
     bool showPollution;
     QString filename;
+    bool playSound;
+    QSound washSound;
 
     void updateDMFB();
     QTimer timer;
@@ -57,10 +62,12 @@ private:
     void setShowPollution();
     void hidePollution();
     void reset();
+    void stopPlay();
 
 
     bool checkWash();
     bool washing;
+    //QMediaPlayer * washSound;
 };
 
 #endif // MAINWINDOW_H

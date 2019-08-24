@@ -3,7 +3,8 @@
 #include "dmfb.h"
 #include <QDebug>
 
-const QColor DrawWidget::background = QColor(255, 255, 255);
+const QColor DrawWidget::background = QColor(75, 75, 75);
+const QColor DrawWidget::cell = QColor(90, 90, 90);
 
 DrawWidget::DrawWidget(QWidget *parent) :
     QWidget(parent),
@@ -78,6 +79,11 @@ void DrawWidget::updateBackground()
 
     auto row = manager->row;
     auto col = manager->col;
+
+    // draw cell color
+    p.setBrush(cell);
+    p.drawRect(0, 0, len_x * col, len_y * row);
+
     // draw grid
     for(int r = 0;r <= row; r++)
     {
@@ -87,6 +93,7 @@ void DrawWidget::updateBackground()
     {
         p.drawLine(len_x * c, 0, len_x * c, len_y * row);
     }
+
     // draw inputs
     for(auto input:manager->inputs)
     {
@@ -106,6 +113,7 @@ void DrawWidget::updateBackground()
     // draw cleaner
     if(manager->cleaner)
     {
+        p.save();
         auto wash = getDrawPos(0, 0, row, col);
         auto waste = getDrawPos(col - 1, row - 1, row, col);
         drawText(p, wash.first, wash.second, "Wash", QColor("cyan"));
@@ -122,7 +130,18 @@ void DrawWidget::updateBackground()
                 p.drawLine((x + 1) * len_x, y * len_y, x * len_x, (y + 1) * len_y);
             }
         }
+        p.restore();
     }
+
+    // draw intersections
+    p.save();
+    p.setBrush(Qt::black);
+    for(int r = 0;r <= row; r++)
+        for(int c = 0;c <= row; c++)
+        {
+            p.drawEllipse(len_x * c - len_x / 20, len_y * r - len_y / 20, len_x / 10, len_y / 10);
+        }
+    p.restore();
 
     p.end();
     updateImage();
@@ -143,7 +162,8 @@ void DrawWidget::drawText(QPainter &p, int x, int y, QString s, const QBrush & b
     if(brush.style() != Qt::NoBrush)
     {
         p.setBrush(brush);
-        p.drawRect(r);
+        //p.drawRect(r);
+        p.drawRoundedRect(r, qreal(r.width()) / 10, qreal(r.height()) / 10);
     }
 
     auto font = p.font();
@@ -266,6 +286,6 @@ void DrawWidget::updateImage()
         }
     }
 
-    update();
+    repaint();
     return;
 }
