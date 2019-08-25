@@ -1,5 +1,4 @@
 #include "drawwidget.h"
-#include "ui_drawwidget.h"
 #include "dmfb.h"
 #include <QDebug>
 
